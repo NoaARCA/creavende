@@ -1,0 +1,18 @@
+from django.urls import path
+from shop import views
+
+app_name = 'shop'
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('register/', views.register, name='register'),
+    path('login/', views.user_login, name='user_login'),
+    path('logout/', views.user_logout, name='user_logout'),
+    path('courses/', views.courses, name='courses'),
+    path('upload/', views.upload_course, name='upload_course'),
+    path('cart/', views.cart, name='cart'),
+    path('add-to-cart/<int:course_id>/', views.add_to_cart, name='add_to_cart'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('ref/<str:code>/', views.affiliate_redirect, name='affiliate_redirect'),
+    path('affiliate/', views.affiliate_dashboard, name='affiliate_dashboard'),
+]

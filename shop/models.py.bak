@@ -1,0 +1,47 @@
+from django.db import models
+from django.contrib.auth.models import User
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Course(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='courses/', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    duration = models.CharField(max_length=50, blank=True)
+    level = models.CharField(max_length=50, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    affiliate_commission = models.PositiveIntegerField(default=10, help_text="Porcentaje de comisión para afiliados (ej. 10 para 10%)")
+
+    def __str__(self):
+        return self.name
+
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.course.name}"
+
+class AffiliateLink(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=100, unique=True)
+    clicks = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username}'s affiliate link"
+
+class AffiliateSale(models.Model):
+    affiliate_link = models.ForeignKey(AffiliateLink, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Sale of {self.course.name} via {self.affiliate_link.user.username}"

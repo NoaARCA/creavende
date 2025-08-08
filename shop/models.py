@@ -1,0 +1,136 @@
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    points = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.points} puntos"
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Course(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='courses/', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    duration = models.CharField(max_length=50, blank=True)
+    level = models.CharField(max_length=50, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    affiliate_commission = models.PositiveIntegerField(default=10, help_text="Porcentaje de comisión para afiliados (ej. 10 para 10%)")
+
+    def __str__(self):
+        return self.name
+
+class Module(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules')
+    title = models.CharField(max_length=200)
+    order = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.course.name} - {self.title}"
+
+    class Meta:
+        ordering = ['order']
+
+class Lesson(models.Model):
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='lessons')
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    video_url = models.URLField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.module.title} - {self.title}"
+
+    class Meta:
+        ordering = ['order']
+
+class UserLessonProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title}"
+
+    class Meta:
+        unique_together = ['user', 'lesson']
+
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.course.name}"
+
+class AffiliateLink(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=100, unique=True)
+    clicks = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username}'s affiliate link"
+
+class AffiliateSale(models.Model):
+    affiliate_link = models.ForeignKey(AffiliateLink, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Sale of {self.course.name} via {self.affiliate_link.user.username}"
+    
+class Resource(models.Model):
+    title = models.CharField(max_length=200)
+    file = models.FileField(upload_to='resources/pdfs/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='resources')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+class Enrollment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.course.name}"
+    
+class Purchase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='purchases')
+    quantity = models.PositiveIntegerField(default=1)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    purchased_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='Completada')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.course.name} - {self.total_amount}"
+    
+class Comment(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    rating = models.PositiveIntegerField(default=5)  # Ej. 1-5
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.username} on {self.course.name}'

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static cart_tags %}
+{% block background_color %}#E6F4EA{% endblock %}
+{% block title %}Carrito de Compras{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Carrito de Compras</h2>
+    {% if cart_items %}
+    <table class="table table-striped shadow-sm">
+        <thead>
+            <tr>
+                <th>Curso</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart_items %}
+            <tr>
+                <td>{{ item.course.name }}</td>
+                <td>${{ item.course.price|floatformat:2 }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.course.price|floatformat:2|multiply:item.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h4>Total: ${{ total|floatformat:2 }}</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'shop:checkout' %}" class="btn btn-primary"><i class="bi bi-check-circle"></i> Finalizar Compra</a>
+        <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+    </div>
+    {% else %}
+    <p>Tu carrito está vacío.</p>
+    <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+    {% endif %}
+</div>
+{% endblock %}

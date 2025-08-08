@@ -1,0 +1,200 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
+from .models import Course, CartItem, Category, AffiliateLink, AffiliateSale, Module, Lesson, UserLessonProgress
+from decimal import Decimal
+import hashlib
+from django.utils import timezone
+
+def index(request):
+    return render(request, 'index.html')
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'El usuario ya existe')
+            return render(request, 'register.html')
+        user = User.objects.create_user(username, email, password)
+        user.save()
+        code = hashlib.md5(user.username.encode()).hexdigest()[:10]
+        AffiliateLink.objects.create(user=user, code=code)
+        login(request, user)
+        messages.success(request, 'Registro exitoso')
+        return redirect('shop:index')
+    return render(request, 'register.html')
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, 'Inicio de sesión exitoso')
+            return redirect('shop:index')
+        messages.error(request, 'Usuario o contraseña incorrectos')
+    return render(request, 'login.html')
+
+@login_required(login_url='shop:user_login')
+def user_logout(request):
+    logout(request)
+    messages.success(request, 'Sesión cerrada')
+    return redirect('shop:index')
+
+@login_required(login_url='shop:user_login')
+def courses(request):
+    category_id = request.GET.get('category')
+    courses = Course.objects.all()
+    if category_id:
+        courses = courses.filter(category_id=category_id)
+    categories = Category.objects.all()
+    return render(request, 'courses.html', {'courses': courses, 'categories': categories})
+
+@login_required(login_url='shop:user_login')
+def upload_course(request):
+    if request.method == 'POST':
+        name = request.POST['name']
+        description = request.POST['description']
+        price = request.POST['price']
+        image = request.FILES.get('image')
+        duration = request.POST.get('duration', '')
+        level = request.POST.get('level', '')
+        category_id = request.POST.get('category')
+        affiliate_commission = request.POST.get('affiliate_commission', 10)
+        course = Course(
+            name=name,
+            description=description,
+            price=price,
+            image=image,
+            created_by=request.user,
+            duration=duration,
+            level=level,
+            category_id=category_id,
+            affiliate_commission=affiliate_commission
+        )
+        course.save()
+        messages.success(request, 'Curso subido')
+        return redirect('shop:courses')
+    categories = Category.objects.all()
+    return render(request, 'upload.html', {'categories': categories})
+
+@login_required(login_url='shop:user_login')
+def cart(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    total = sum(item.course.price * item.quantity for item in cart_items)
+    return render(request, 'cart.html', {'cart_items': cart_items, 'total': total})
+
+@login_required(login_url='shop:user_login')
+def add_to_cart(request, course_id):
+    course = Course.objects.get(id=course_id)
+    cart_item, created = CartItem.objects.get_or_create(
+        user=request.user,
+        course=course
+    )
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+    messages.success(request, 'Curso añadido al carrito')
+    return redirect('shop:cart')
+
+@login_required(login_url='shop:user_login')
+def checkout(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    if not cart_items:
+        messages.warning(request, 'El carrito está vacío')
+        return redirect('shop:cart')
+    affiliate_code = request.session.get('affiliate_code')
+    if affiliate_code:
+        try:
+            affiliate_link = AffiliateLink.objects.get(code=affiliate_code)
+            for item in cart_items:
+                commission_percentage = item.course.affiliate_commission / 100
+                commission = item.course.price * item.quantity * Decimal(commission_percentage)
+                AffiliateSale.objects.create(
+                    affiliate_link=affiliate_link,
+                    course=item.course,
+                    amount=commission
+                )
+        except AffiliateLink.DoesNotExist:
+            pass
+    cart_items.delete()
+    if 'affiliate_code' in request.session:
+        del request.session['affiliate_code']
+    messages.success(request, 'Compra realizada')
+    return redirect('shop:index')
+
+def affiliate_redirect(request, code):
+    try:
+        affiliate_link = AffiliateLink.objects.get(code=code)
+        affiliate_link.clicks += 1
+        affiliate_link.save()
+        request.session['affiliate_code'] = code
+        return redirect('shop:courses')
+    except AffiliateLink.DoesNotExist:
+        return redirect('shop:index')
+
+@login_required(login_url='shop:user_login')
+def affiliate_dashboard(request):
+    try:
+        affiliate_link = AffiliateLink.objects.get(user=request.user)
+        sales = AffiliateSale.objects.filter(affiliate_link=affiliate_link)
+        total_earnings = sum(sale.amount for sale in sales)
+        context = {
+            'affiliate_link': affiliate_link,
+            'sales': sales,
+            'total_earnings': total_earnings,
+        }
+        return render(request, 'affiliate_dashboard.html', context)
+    except AffiliateLink.DoesNotExist:
+        messages.warning(request, 'No tienes un enlace de afiliado.')
+        return redirect('shop:index')
+
+@login_required(login_url='shop:user_login')
+def course_detail(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    # Verificar si el usuario compró el curso
+    has_purchased = CartItem.objects.filter(user=request.user, course=course).exists()
+    modules = course.modules.all()
+    progress = 0
+    if has_purchased and modules.exists():
+        total_lessons = sum(module.lessons.count() for module in modules)
+        completed_lessons = UserLessonProgress.objects.filter(
+            user=request.user, lesson__module__course=course, completed=True
+        ).count()
+        progress = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
+    return render(request, 'course_detail.html', {
+        'course': course,
+        'modules': modules,
+        'has_purchased': has_purchased,
+        'progress': progress,
+    })
+
+@login_required(login_url='shop:user_login')
+def lesson_detail(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    course = lesson.module.course
+    has_purchased = CartItem.objects.filter(user=request.user, course=course).exists()
+    if not has_purchased:
+        messages.warning(request, 'Debes comprar el curso para acceder a esta lección.')
+        return redirect('shop:course_detail', course_id=course.id)
+    progress, created = UserLessonProgress.objects.get_or_create(
+        user=request.user,
+        lesson=lesson,
+        defaults={'completed': False}
+    )
+    if request.method == 'POST':
+        progress.completed = True
+        progress.completed_at = timezone.now()
+        progress.save()
+        messages.success(request, '¡Lección completada!')
+        return redirect('shop:course_detail', course_id=course.id)
+    return render(request, 'lesson_detail.html', {
+        'lesson': lesson,
+        'course': course,
+        'progress': progress,
+    })

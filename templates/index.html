@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block background_color %}#F8F9FA{% endblock %}
+{% block title %}CreaVende - Inicio{% endblock %}
+{% block content %}
+<!-- Hero Section -->
+<div class="container-fluid text-white py-5" style="background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1556740738-6bf283d5b56e?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; min-height: 80vh;">
+    <div class="container text-center py-5">
+        <h1 class="display-2 fw-bold mb-4">CreaVende: Tu Pasión, Tu Tienda</h1>
+        <p class="lead mb-5 fs-3">La plataforma exclusiva donde creadores como tú transforman ideas en éxito. Regístrate y descubre un mundo de oportunidades.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'shop:register' %}" class="btn btn-primary btn-lg px-5 py-3"><i class="bi bi-person-plus"></i> ¡Comienza Ahora!</a>
+            <a href="{% url 'shop:courses' %}" class="btn btn-primary btn-lg px-5 py-3"><i class="bi bi-book"></i> Explora Cursos</a>
+        </div>
+    </div>
+</div>
+
+<!-- Beneficios -->
+<div class="container py-5">
+    <h2 class="text-center mb-5 fw-bold">Lo Que Hace Único a CreaVende</h2>
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 p-3">
+                <i class="bi bi-brush fs-1 text-primary mb-3"></i>
+                <h3 class="h4">Crea Tu Legado</h3>
+                <p>Sube productos que reflejen tu esencia y conecta con una comunidad que valora tu trabajo.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 p-3">
+                <i class="bi bi-cart-check fs-1 text-primary mb-3"></i>
+                <h3 class="h4">Vende Sin Esfuerzo</h3>
+                <p>Una plataforma sencilla que te ayuda a llegar a compradores apasionados por lo original.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 p-3">
+                <i class="bi bi-lock fs-1 text-primary mb-3"></i>
+                <h3 class="h4">Acceso Exclusivo</h3>
+                <p>Nuestros productos son solo para miembros, asegurando una experiencia única.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Llamado a la Acción -->
+<div class="container-fluid bg-dark text-white py-5">
+    <div class="container text-center">
+        <h2 class="mb-4 fw-bold">¿Listo para Brillar?</h2>
+        <p class="lead mb-5 fs-4">No hay otro lugar como CreaVende. Únete hoy y empieza a crear, vender y crecer.</p>
+        <a href="{% url 'shop:register' %}" class="btn btn-primary btn-lg px-5 py-3"><i class="bi bi-person-plus"></i> Regístrate Gratis</a>
+    </div>
+</div>
+
+<!-- Testimonios -->
+<div class="container py-5">
+    <h2 class="text-center mb-5 fw-bold">Voces de CreaVende</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <blockquote class="blockquote text-center">
+                <p>"CreaVende me dio un espacio para brillar con mis diseños."</p>
+                <footer class="blockquote-footer">Sofía, Diseñadora</footer>
+            </blockquote>
+        </div>
+        <div class="col-md-4 mb-4">
+            <blockquote class="blockquote text-center">
+                <p>"Vender mis artesanías nunca fue tan fácil y gratificante."</p>
+                <footer class="blockquote-footer">Mateo, Artesano</footer>
+            </blockquote>
+        </div>
+        <div class="col-md-4 mb-4">
+            <blockquote class="blockquote text-center">
+                <p>"Una comunidad que valora la creatividad como ninguna otra."</p>
+                <footer class="blockquote-footer">Lucía, Creadora</footer>
+            </blockquote>
+        </div>
+    </div>
+</div>
+{% endblock %}

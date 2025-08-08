@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+{% block background_color %}#FFF4E6{% endblock %}
+{% block title %}Panel de Instructores{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Panel de Instructores</h2>
+    <div class="row">
+        <!-- Resumen -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Cursos:</strong> {{ course_data|length }}</p>
+                    <p><strong>Estudiantes:</strong> {{ total_students }}</p>
+                    <p><strong>Ingresos:</strong> ${{ total_income|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Lista de cursos -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Tus Cursos</h5>
+                </div>
+                <div class="card-body">
+                    {% if course_data %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Estudiantes</th>
+                                <th>Ingresos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in course_data %}
+                            <tr>
+                                <td>{{ data.course.name }}</td>
+                                <td>{{ data.students }}</td>
+                                <td>${{ data.income|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p>No has creado cursos aún.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+        <a href="{% url 'shop:upload_course' %}" class="btn btn-primary"><i class="bi bi-upload"></i> Subir Nuevo Curso</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+from django.contrib import admin
+from .models import Course, CartItem, Category, AffiliateLink, AffiliateSale, Module, Lesson, UserLessonProgress
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ['name', 'price', 'created_by', 'duration', 'level', 'category', 'affiliate_commission']
+    list_filter = ['created_by', 'level', 'category']
+    search_fields = ['name', 'description']
+    ordering = ['name']
+
+@admin.register(Module)
+class ModuleAdmin(admin.ModelAdmin):
+    list_display = ['course', 'title', 'order']
+    list_filter = ['course']
+    search_fields = ['title']
+    ordering = ['course', 'order']
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ['module', 'title', 'order']
+    list_filter = ['module__course']
+    search_fields = ['title']
+    ordering = ['module', 'order']
+
+@admin.register(UserLessonProgress)
+class UserLessonProgressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'lesson', 'completed', 'completed_at']
+    list_filter = ['completed', 'lesson__module__course']
+    search_fields = ['user__username']
+    ordering = ['user']
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ['user', 'course', 'quantity']
+    list_filter = ['user']
+    ordering = ['user']
+
+@admin.register(AffiliateLink)
+class AffiliateLinkAdmin(admin.ModelAdmin):
+    list_display = ['user', 'code', 'clicks']
+    search_fields = ['user__username', 'code']
+    ordering = ['user']
+
+@admin.register(AffiliateSale)
+class AffiliateSaleAdmin(admin.ModelAdmin):
+    list_display = ['affiliate_link', 'course', 'amount', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['course__name']
+    ordering = ['-created_at']

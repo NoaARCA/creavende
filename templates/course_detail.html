@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}  <!-- Añade esta línea -->
+{% block background_color %}#E0F7FA{% endblock %}
+{% block title %}{{ course.name }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <!-- Detalles del curso -->
+    <div class="row">
+        <div class="col-md-4">
+            {% if course.image %}
+            <img src="{{ course.image.url }}" class="img-fluid rounded shadow-sm mb-4" alt="{{ course.name }}" style="max-height: 300px; object-fit: cover;">
+            {% else %}
+            <img src="https://via.placeholder.com/300x200" class="img-fluid rounded shadow-sm mb-4" alt="Sin imagen">
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">{{ course.name }}</h2>
+                    <p>{{ course.description }}</p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-currency-dollar text-primary"></i> <strong>Precio:</strong> ${{ course.price|floatformat:2 }}</li>
+                        <li><i class="bi bi-person text-primary"></i> <strong>Creado por:</strong> {{ course.created_by.username }}</li>
+                        {% if course.category %}
+                        <li><i class="bi bi-tag text-primary"></i> <strong>Categoría:</strong> {{ course.category.name }}</li>
+                        {% endif %}
+                        {% if course.duration %}
+                        <li><i class="bi bi-clock text-primary"></i> <strong>Duración:</strong> {{ course.duration }}</li>
+                        {% endif %}
+                        {% if course.level %}
+                        <li><i class="bi bi-bar-chart text-primary"></i> <strong>Nivel:</strong> {{ course.level }}</li>
+                        {% endif %}
+                    </ul>
+                    {% if has_purchased %}
+                    <div class="mt-4">
+                        <h5>Progreso del Curso</h5>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress|floatformat:1 }}%;" aria-valuenow="{{ progress|floatformat:1 }}" aria-valuemin="0" aria-valuemax="100">{{ progress|floatformat:1 }}%</div>
+                        </div>
+                        <p><strong>{{ completed_lessons }} de {{ total_lessons }} lecciones completadas</strong></p>
+                        {% if first_uncompleted_lesson %}
+                        <a href="{% url 'shop:lesson_detail' first_uncompleted_lesson.id %}" class="btn btn-primary"><i class="bi bi-play-circle"></i> Continuar Curso</a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <a href="{% url 'shop:add_to_cart' course.id %}" class="btn btn-primary mt-3"><i class="bi bi-cart"></i> Comprar Curso</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulos (Acordeón) -->
+    {% if has_purchased %}
+    <h3 class="mt-5">Módulos</h3>
+    <div class="accordion" id="modulesAccordion">
+        {% for module in modules %}
+        <div class="accordion-item shadow-sm">
+            <h2 class="accordion-header" id="heading{{ module.id }}">
+                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ module.id }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ module.id }}">
+                    {{ module.title }}
+                </button>
+            </h2>
+            <div id="collapse{{ module.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ module.id }}" data-bs-parent="#modulesAccordion">
+                <div class="accordion-body">
+                    {% for lesson in module.lessons.all %}
+                    <p>
+                        <a href="{% url 'shop:lesson_detail' lesson.id %}">{{ lesson.title }}</a>
+                        {% if lesson_progress|lookup:lesson.id %}
+                        <span class="badge bg-success ms-2">Completada</span>
+                        {% else %}
+                        <span class="badge bg-secondary ms-2">Pendiente</span>
+                        {% endif %}
+                    </p>
+                    {% empty %}
+                    <p>No hay lecciones en este módulo.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No hay módulos disponibles.</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Comentarios -->
+    <h3 class="mt-5">Comentarios</h3>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            {% if comments %}
+            {% for comment in comments %}
+            <div class="border-bottom pb-3 mb-3">
+                <p><strong>{{ comment.user.username }}</strong> <small class="text-muted">{{ comment.created_at|date:"d/m/Y H:i" }}</small></p>
+                <p>Rating: {% for i in "12345" %}{% if comment.rating >= forloop.counter %}<i class="bi bi-star-fill text-warning"></i>{% else %}<i class="bi bi-star text-warning"></i>{% endif %}{% endfor %}</p>
+                <p>{{ comment.text }}</p>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p>No hay comentarios aún. ¡Sé el primero en comentar!</p>
+            {% endif %}
+            {% if has_purchased and comment_form %}
+            <h5>Deja tu comentario</h5>
+            <form method="post">
+                {% csrf_token %}
+                {{ comment_form.as_p }}
+                <button type="submit" class="btn btn-primary"><i class="bi bi-chat"></i> Enviar Comentario</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Volver a Cursos -->
+    <a href="{% url 'shop:courses' %}" class="btn btn-primary mb-4"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+</div>
+{% endblock %}

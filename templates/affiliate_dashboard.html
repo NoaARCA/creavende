@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+{% block background_color %}#F3E8FF{% endblock %}
+{% block title %}Panel de Afiliados{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Panel de Afiliados</h2>
+    <div class="row">
+        <!-- Resumen -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Clics:</strong> {{ total_clicks }}</p>
+                    <p><strong>Ventas:</strong> {{ total_sales }}</p>
+                    <p><strong>Total ganado:</strong> ${{ total_commission|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Gamificación -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Gamificación</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Puntos:</strong> {{ points }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Enlace de afiliado -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Tu Enlace de Afiliado</h5>
+                </div>
+                <div class="card-body">
+                    {% if affiliate_link %}
+                    <p>Comparte este enlace para ganar comisiones:</p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ request.build_absolute_uri }}{% url 'shop:affiliate_redirect' affiliate_link.code %}" readonly id="affiliateLink">
+                        <button class="btn btn-primary" onclick="copyLink()"><i class="bi bi-clipboard"></i> Copiar</button>
+                    </div>
+                    <p class="mt-2">Clics totales: {{ total_clicks }}</p>
+                    {% else %}
+                    <p>No tienes un enlace de afiliado. Contacta al administrador.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Detalle de ventas -->
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5>Tus Ganancias</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Comisión</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in affiliate_sales %}
+                            <tr>
+                                <td>{{ sale.course.name }}</td>
+                                <td>${{ sale.amount|floatformat:2 }}</td>
+                                <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">No hay ventas aún. ¡Empieza a compartir tu enlace!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a href="{% url 'shop:courses' %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+</div>
+<script>
+function copyLink() {
+    var copyText = document.getElementById('affiliate市区Link').value;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(copyText).then(() => {
+            alert('¡Enlace copiado al portapapeles!');
+        }).catch(() => {
+            fallbackCopyLink(copyText);
+        });
+    } else {
+        fallbackCopyLink(copyText);
+    }
+}
+function fallbackCopyLink(text) {
+    var copyText = document.getElementById('affiliateLink');
+    copyText.select();
+    document.execCommand('copy');
+    alert('¡Enlace copiado al portapapeles!');
+}
+</script>
+{% endblock %}

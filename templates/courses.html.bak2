@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Explora Nuestros Cursos</h2>
+    <a href="{% url 'shop:upload_course' %}" class="btn btn-primary mb-4">Subir Nuevo Curso</a>
+    <div class="mb-4">
+        <form method="get">
+            <label for="category">Filtrar por Categoría:</label>
+            <select name="category" id="category" onchange="this.form.submit()">
+                <option value="">Todas</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if category.id|stringformat:"s" == request.GET.category %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="row">
+        {% for course in courses %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if course.image %}
+                <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <img src="https://via.placeholder.com/200x200" class="card-img-top" alt="Curso sin imagen">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.name }}</h5>
+                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                    <p class="card-text"><strong>${{ course.price }}</strong></p>
+                    {% if course.duration %}
+                    <p class="card-text"><small class="text-muted">Duración: {{ course.duration }}</small></p>
+                    {% endif %}
+                    {% if course.level %}
+                    <p class="card-text"><small class="text-muted">Nivel: {{ course.level }}</small></p>
+                    {% endif %}
+                    {% if course.category %}
+                    <p class="card-text"><small class="text-muted">Categoría: {{ course.category.name }}</small></p>
+                    {% endif %}
+                    <p class="card-text"><small class="text-muted">Creado por: {{ course.created_by.username }}</small></p>
+                    <a href="{% url 'shop:course_detail' course.id %}" class="btn btn-outline-info">Ver Curso</a>
+                    <a href="{% url 'shop:add_to_cart' course.id %}" class="btn btn-outline-primary">Añadir al Carrito</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No hay cursos disponibles. ¡Sube el primero!</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

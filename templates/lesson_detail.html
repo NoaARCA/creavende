@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% block background_color %}#F5F5DC{% endblock %}
+{% block title %}{{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">{{ lesson.title }}</h2>
+    <p><strong>Curso:</strong> <a href="{% url 'shop:course_detail' course.id %}">{{ course.name }}</a></p>
+    <p><strong>Módulo:</strong> {{ lesson.module.title }}</p>
+    {% if lesson.video_url %}
+    <div class="embed-responsive embed-responsive-16by9 mb-4 shadow-sm">
+        <iframe class="embed-responsive-item" src="{{ lesson.video_url }}" allowfullscreen></iframe>
+    </div>
+    {% endif %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            {{ lesson.content|linebreaks }}
+        </div>
+    </div>
+    {% if not progress.completed %}
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Marcar como Completada</button>
+    </form>
+    {% else %}
+    <p class="text-success">¡Lección completada el {{ progress.completed_at|date:"d/m/Y H:i" }}!</p>
+    {% endif %}
+    <h3>Recursos</h3>
+    <ul>
+        {% for resource in lesson.resources.all %}
+        <li><a href="{{ resource.file.url }}" target="_blank">{{ resource.title }}</a></li>
+        {% empty %}
+        <li>No hay recursos disponibles.</li>
+        {% endfor %}
+    </ul>
+    {% if user.groups.filter(name='Creators').exists %}
+    <a href="{% url 'shop:upload_resource' lesson_id=lesson.id %}" class="btn btn-primary mb-3"><i class="bi bi-upload"></i> Subir PDF</a>
+    {% endif %}
+    <a href="{% url 'shop:course_detail' course.id %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver al Curso</a>
+</div>
+{% endblock %}

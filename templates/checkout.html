@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% block background_color %}#FFF3CD{% endblock %}
+{% block title %}Confirmación de Compra{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Confirmación de Compra</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5>Detalles de la Compra</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Fecha:</strong> {{ purchased_at|date:"d/m/Y H:i" }}</p>
+            <p><strong>Total:</strong> ${{ total|floatformat:2 }}</p>
+            <h6>Cursos Comprados:</h6>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Curso</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in purchase_data %}
+                    <tr>
+                        <td>{{ item.course.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.course.price|floatformat:2 }}</td>
+                        <td>${{ item.total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex gap-2">
+                <a href="{% url 'shop:purchases' %}" class="btn btn-primary"><i class="bi bi-list-ul"></i> Ver Historial de Compras</a>
+                <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
