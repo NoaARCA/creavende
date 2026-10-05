@@ -113,59 +113,80 @@ def checkout(request):
         messages.warning(request, 'El carrito está vacío')
         return redirect('shop:cart')
 
-    # Calcular total y preparar datos para la plantilla
     total = sum(item.course.price * item.quantity for item in cart_items)
     purchase_data = []
+    
+    # Código del afiliado almacenado previamente en la sesión del navegador
+    affiliate_code = request.session.get('affiliate_code')
+    affiliate_link = None
+    
+    if affiliate_code:
+        try:
+            affiliate_link = AffiliateLink.objects.get(code=affiliate_code)
+        except AffiliateLink.DoesNotExist:
+            pass
+
     for item in cart_items:
-        # Registrar la compra
+        # 1. Calcular el valor bruto del ítem procesado
+        item_total = item.course.price * item.quantity
+        
+        # 2. Calcular la comisión fija de la plataforma CrearVende (20% según Canvas)
+        p_commission = item_total * Decimal('0.20')
+        
+        # 3. Calcular la comisión asignada al afiliado si existe el enlace de redirección
+        a_commission = Decimal('0.00')
+        if affiliate_link:
+            commission_percentage = item.course.affiliate_commission / 100
+            a_commission = item_total * Decimal(commission_percentage)
+            
+            # Registrar la venta en el histórico de comisiones del afiliado
+            AffiliateSale.objects.create(
+                affiliate_link=affiliate_link,
+                course=item.course,
+                amount=a_commission
+            )
+            # Otorgar puntos de fidelidad del perfil al afiliado
+            profile = UserProfile.objects.get_or_create(user=affiliate_link.user)[0]
+            profile.points += 10  
+            profile.save()
+
+        # 4. Calcular el remanente neto para el instructor creador del curso
+        i_earnings = item_total - p_commission - a_commission
+
+        # 5. Registrar la compra desglosada en la base de datos
         purchase = Purchase.objects.create(
             user=request.user,
             course=item.course,
             quantity=item.quantity,
-            total_amount=item.course.price * item.quantity,
+            total_amount=item_total,
+            platform_commission=p_commission,
+            affiliate_commission=a_commission,
+            instructor_earnings=i_earnings,
             status='Completada'
         )
-        # Inscribir al usuario en el curso
+        
+        # Inscribir formalmente al estudiante en el curso adquirido
         Enrollment.objects.get_or_create(user=request.user, course=item.course)
+        
         purchase_data.append({
             'course': item.course,
             'quantity': item.quantity,
-            'total': item.course.price * item.quantity
+            'total': item_total
         })
 
-    # Procesar comisiones de afiliados
-    affiliate_code = request.session.get('affiliate_code')
-    if affiliate_code:
-        try:
-            affiliate_link = AffiliateLink.objects.get(code=affiliate_code)
-            for item in cart_items:
-                commission_percentage = item.course.affiliate_commission / 100
-                commission = item.course.price * item.quantity * Decimal(commission_percentage)
-                AffiliateSale.objects.create(
-                    affiliate_link=affiliate_link,
-                    course=item.course,
-                    amount=commission
-                )
-                # Añadir puntos al afiliado
-                profile = UserProfile.objects.get_or_create(user=affiliate_link.user)[0]
-                profile.points += 10  # 10 puntos por venta
-                profile.save()
-        except AffiliateLink.DoesNotExist:
-            pass
-
-    # Limpiar carrito y sesión
+    # Limpieza de memoria temporal del carrito y la sesión de afiliado
     cart_items.delete()
     if 'affiliate_code' in request.session:
         del request.session['affiliate_code']
 
-    # Mostrar página de checkout con detalles
     context = {
         'purchase_data': purchase_data,
         'total': total,
         'purchased_at': timezone.now()
     }
-    messages.success(request, 'Compra realizada con éxito')
+    messages.success(request, 'Compra realizada con éxito. Distribución de comisiones procesada.')
     return render(request, 'checkout.html', context)
+
 
 @login_required(login_url='shop:user_login')
 def purchases(request):
@@ -191,25 +212,59 @@ def affiliate_redirect(request, code):
     # Resto de la lógica
     return redirect('shop:course_detail', course_id=course.id)
 
-
-@login_required
+@login_required(login_url='shop:user_login')
 def affiliate_dashboard(request):
     user = request.user
+    # 1. Obtener el enlace único del afiliado promotor
     affiliate_link = AffiliateLink.objects.filter(user=user).first()
-    affiliate_sales = AffiliateSale.objects.filter(affiliate_link=affiliate_link) if affiliate_link else []
+    
+    # 2. Filtrar el histórico de conversiones/ventas de sus enlaces
+    affiliate_sales = AffiliateSale.objects.filter(affiliate_link=affiliate_link).order_by('-created_at') if affiliate_link else []
+    
     total_sales = len(affiliate_sales)
     total_commission = sum(sale.amount for sale in affiliate_sales) if affiliate_sales else 0
     total_clicks = affiliate_link.clicks if affiliate_link else 0
-    profile = UserProfile.objects.get_or_create(user=user)[0]  # Añadir
+    
+    # 3. Recuperar de forma segura el perfil de fidelidad y sus puntos acumulados
+    profile = UserProfile.objects.get_or_create(user=user)[0]
+    
     context = {
         'affiliate_link': affiliate_link,
         'total_clicks': total_clicks,
         'total_sales': total_sales,
         'total_commission': total_commission,
         'affiliate_sales': affiliate_sales,
-        'points': profile.points,  # Añadir
+        'points': profile.points,  # Mantiene tu sistema de gamificación intacto
     }
     return render(request, 'affiliate_dashboard.html', context)
+
+
+@login_required(login_url='shop:user_login')
+def instructor_dashboard(request):
+    user = request.user
+    # 1. Obtener la oferta de cursos creados bajo la autoría de este instructor
+    my_courses = Course.objects.filter(created_by=user)
+    
+    # 2. Extraer de la base de datos el historial de matrículas indexadas a sus productos
+    my_sales = Purchase.objects.filter(course__in=my_courses).order_by('-purchased_at')
+    
+    # 3. Sumar la métrica de ingresos netos reales calculados en el checkout (Descontado el 20% de CreaVende)
+    total_instructor_earnings = sum(sale.instructor_earnings for sale in my_sales)
+    total_courses_sold = my_sales.count()
+    
+    # 4. Calcular el volumen total de alumnos matriculados en su catálogo de formación
+    total_students = Enrollment.objects.filter(course__in=my_courses).count()
+    
+    context = {
+        'my_courses': my_courses,
+        'my_sales': my_sales,
+        'total_ganancias_instructor': total_instructor_earnings,
+        'total_cursos_vendidos': total_courses_sold,
+        'total_estudiantes': total_students
+    }
+    return render(request, 'instructor_dashboard.html', context)
+
+
 
 @login_required
 def course_detail(request, course_id):
@@ -307,28 +362,32 @@ def upload_resource(request, lesson_id):
         form = ResourceUploadForm(initial={'lesson': lesson})
     return render(request, 'shop/upload_resource.html', {'form': form, 'lesson': lesson})
 
-@login_required
-def instructor_dashboard(request):
-    user = request.user
-    # Obtener cursos creados por el instructor
-    courses = Course.objects.filter(created_by=user)
-    # Calcular estudiantes inscritos e ingresos por curso
-    course_data = []
-    total_income = 0
-    total_students = 0
-    for course in courses:
-        students = Enrollment.objects.filter(course=course).count()
-        income = AffiliateSale.objects.filter(course=course).aggregate(total=models.Sum('amount'))['total'] or 0
-        total_income += income
-        total_students += students
-        course_data.append({
-            'course': course,
-            'students': students,
-            'income': income
-        })
+
+
+@login_required(login_url='shop:user_login')
+def admin_dashboard(request):
+    # 1. Seguridad: Solo permitir el ingreso si el usuario es administrador (Superusuario)
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para acceder al panel de administración.')
+        return redirect('shop:index')
+    
+    # 2. Traer todas las compras registradas en la base de datos
+    all_purchases = Purchase.objects.all().order_by('-purchased_at')
+    
+    # 3. Sumar matemáticamente las columnas de comisiones usando tu nueva base de datos
+    total_revenue_platform = sum(p.platform_commission for p in all_purchases)
+    total_revenue_affiliates = sum(p.affiliate_commission for p in all_purchases)
+    total_revenue_instructors = sum(p.instructor_earnings for p in all_purchases)
+    total_sales_bruto = sum(p.total_amount for p in all_purchases)
+    
+    # 4. Enviar los datos listos a la pantalla (HTML)
     context = {
-        'course_data': course_data,
-        'total_income': total_income,
-        'total_students': total_students
+        'purchases': all_purchases,
+        'total_plataforma': total_revenue_platform,
+        'total_afiliados': total_revenue_affiliates,
+        'total_instructores': total_revenue_instructors,
+        'total_bruto': total_sales_bruto,
+        'total_transacciones': all_purchases.count()
     }
-    return render(request, 'instructor_dashboard.html', context)
+    
+    return render(request, 'admin_dashboard.html', context)

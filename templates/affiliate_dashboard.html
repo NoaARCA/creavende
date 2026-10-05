@@ -1,96 +1,143 @@
 {% extends "base.html" %}
 {% load static %}
-{% block background_color %}#F3E8FF{% endblock %}
-{% block title %}Panel de Afiliados{% endblock %}
+
+<!-- Sincronizamos el fondo con la identidad visual premium -->
+{% block background_color %}#0F172A{% endblock %}
+
+{% block title %}Panel de Afiliados - CreaVende{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Panel de Afiliados</h2>
-    <div class="row">
-        <!-- Resumen -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Resumen</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Clics:</strong> {{ total_clicks }}</p>
-                    <p><strong>Ventas:</strong> {{ total_sales }}</p>
-                    <p><strong>Total ganado:</strong> ${{ total_commission|floatformat:2 }}</p>
-                </div>
-            </div>
+<div class="container mt-5" style="max-width: 1100px;">
+    
+    <!-- Encabezado de la Sección -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+        <div>
+            <h2 class="fw-bold text-white mb-1">💼 Panel de Afiliados Digitales</h2>
+            <p class="text-muted small mb-0">Gestiona tus herramientas de promoción, rastrea tus clics y controla tus ganancias acumuladas.</p>
         </div>
-        <!-- Gamificación -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Gamificación</h5>
+        <a href="{% url 'shop:courses' %}" class="btn btn-outline-light btn-sm px-3" style="border-radius: 8px;">
+            <i class="bi bi-arrow-left"></i> Ver Catálogo
+        </a>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- Bloque Izquierdo: Métricas y Gamificación -->
+        <div class="col-lg-4 d-flex flex-column gap-4">
+            
+            <!-- Tarjeta de Resumen Financiero -->
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-header border-0 py-3" style="background-color: #1E293B; border-top-left-radius: 14px; border-top-right-radius: 14px;">
+                    <h6 class="mb-0 fw-bold text-white-50 small text-uppercase"><i class="bi bi-graph-up-arrow text-info"></i> Balance de Rendimiento</h6>
                 </div>
-                <div class="card-body">
-                    <p><strong>Puntos:</strong> {{ points }}</p>
-                </div>
-            </div>
-        </div>
-        <!-- Enlace de afiliado -->
-        <div class="col-md-8 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Tu Enlace de Afiliado</h5>
-                </div>
-                <div class="card-body">
-                    {% if affiliate_link %}
-                    <p>Comparte este enlace para ganar comisiones:</p>
-                    <div class="input-group">
-                        <input type="text" class="form-control" value="{{ request.build_absolute_uri }}{% url 'shop:affiliate_redirect' affiliate_link.code %}" readonly id="affiliateLink">
-                        <button class="btn btn-primary" onclick="copyLink()"><i class="bi bi-clipboard"></i> Copiar</button>
+                <div class="card-body p-4 pt-0">
+                    <div class="mb-3">
+                        <span class="text-muted d-block small">Total Comisiones Ganadas</span>
+                        <h2 class="fw-bold my-1" style="color: #10B981;">${{ total_commission|floatformat:2 }} COP</h2>
                     </div>
-                    <p class="mt-2">Clics totales: {{ total_clicks }}</p>
+                    <div class="row border-top border-secondary-subtle pt-3 text-center">
+                        <div class="col-6 border-end border-secondary-subtle">
+                            <span class="text-muted d-block small">Ventas</span>
+                            <h4 class="fw-bold text-white mb-0">{{ total_sales }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted d-block small">Clics Totales</span>
+                            <h4 class="fw-bold text-info mb-0">{{ total_clicks }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Gamificación y Fidelización -->
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1 fw-bold text-white-50 small text-uppercase"><i class="bi bi-trophy-fill text-warning"></i> Programa de Puntos</h6>
+                        <span class="text-muted small">Canjea tus puntos por beneficios en CreaVende.</span>
+                    </div>
+                    <div class="text-center bg-dark bg-opacity-25 px-3 py-2" style="border-radius: 10px; min-width: 90px; border: 1px solid #3B82F6;">
+                        <span class="text-muted d-block" style="font-size: 0.7rem; text-transform: uppercase;">Puntos</span>
+                        <span class="fs-4 fw-bold text-primary">{{ points }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bloque Derecho: Enlace de Afiliado y Tabla -->
+        <div class="col-lg-8 d-flex flex-column gap-4">
+            
+            <!-- Herramienta del Link de Afiliado -->
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-white mb-2"><i class="bi bi-link-45deg text-primary"></i> Tu Enlace de Promoción Único</h5>
+                    {% if affiliate_link %}
+                    <p class="text-muted small mb-3">Copia y comparte este enlace de rastreo en tus redes sociales. Cada compra realizada a través de él te generará comisiones automáticas de forma inmediata.</p>
+                    <div class="input-group mb-0">
+                        <input type="text" class="form-control text-white bg-dark border-secondary border-end-0 py-2" value="{{ request.build_absolute_uri }}{% url 'shop:affiliate_redirect' affiliate_link.code %}" readonly id="affiliateLink" style="font-size: 0.9rem; border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                        <button class="btn text-white fw-bold px-4" type="button" onclick="copyLink()" style="background-color: #3B82F6; border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                            <i class="bi bi-clipboard"></i> Copiar Link
+                        </button>
+                    </div>
                     {% else %}
-                    <p>No tienes un enlace de afiliado. Contacta al administrador.</p>
+                    <div class="alert bg-dark bg-opacity-25 text-warning border-0 p-3 mb-0 small" style="border-radius: 8px;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> No dispones de un enlace de afiliado activo en el sistema. Por favor, solicita soporte técnico con el administrador de CreaVende.
+                    </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
-        <!-- Detalle de ventas -->
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Tus Ganancias</h5>
+
+            <!-- Registro de Historial de Ventas -->
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-receipt-cutoff text-success"></i> Desglose Histórico de Comisiones</h5>
                 </div>
-                <div class="card-body">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Curso</th>
-                                <th>Comisión</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sale in affiliate_sales %}
-                            <tr>
-                                <td>{{ sale.course.name }}</td>
-                                <td>${{ sale.amount|floatformat:2 }}</td>
-                                <td>{{ sale.created_at|date:"d/m/Y H:i" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3">No hay ventas aún. ¡Empieza a compartir tu enlace!</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: #334155;">
+                            <thead class="text-muted small uppercase">
+                                <tr>
+                                    <th class="ps-4 py-3 border-0">Curso Recomendado</th>
+                                    <th class="text-end py-3 border-0">Comisión Neta</th>
+                                    <th class="text-end pe-4 py-3 border-0">Fecha Operación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in affiliate_sales %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-white py-3 border-0">{{ sale.course.name }}</td>
+                                    <td class="text-end fw-bold border-0" style="color: #10B981;">+${{ sale.amount|floatformat:2 }}</td>
+                                    <td class="text-end text-muted small pe-4 border-0">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted border-0">
+                                        <div class="fs-2 mb-2"><i class="bi bi-cash-stack"></i></div>
+                                        No registras conversiones comerciales aún. <br><span class="small text-white-50">¡Empieza a difundir tu link para activar tu balance!</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
         </div>
+
     </div>
-    <a href="{% url 'shop:courses' %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
 </div>
+
+<!-- JavaScript Oficial de Copiado Seguro -->
 <script>
 function copyLink() {
-    var copyText = document.getElementById('affiliate市区Link').value;
+    var copyText = document.getElementById('affiliateLink');
+    if (!copyText) return;
+    
+    // Método Moderno mediante API del Navegador
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(copyText).then(() => {
-            alert('¡Enlace copiado al portapapeles!');
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert('¡Enlace de Afiliado copiado con éxito al portapapeles!');
         }).catch(() => {
             fallbackCopyLink(copyText);
         });
@@ -98,11 +145,12 @@ function copyLink() {
         fallbackCopyLink(copyText);
     }
 }
-function fallbackCopyLink(text) {
-    var copyText = document.getElementById('affiliateLink');
+
+function fallbackCopyLink(copyText) {
     copyText.select();
+    copyText.setSelectionRange(0, 99999); /* Para dispositivos móviles */
     document.execCommand('copy');
-    alert('¡Enlace copiado al portapapeles!');
+    alert('¡Enlace de Afiliado copiado con éxito al portapapeles!');
 }
 </script>
 {% endblock %}

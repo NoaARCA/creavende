@@ -1,50 +1,101 @@
 {% extends "base.html" %}
 {% load static %}
-{% block background_color %}#FFF3CD{% endblock %}
-{% block title %}Confirmación de Compra{% endblock %}
+
+<!-- Cambiamos el fondo a un gris oscuro premium muy elegante -->
+{% block background_color %}#121214{% endblock %}
+
+{% block title %}¡Compra Exitosa! - CreaVende{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Confirmación de Compra</h2>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h5>Detalles de la Compra</h5>
+<div class="container my-5" style="max-width: 800px;">
+    
+    <!-- Alerta de Éxito Estilizada -->
+    <div class="text-center mb-4">
+        <div class="display-1 text-success mb-2">
+            <i class="bi bi-check-circle-fill"></i>
         </div>
-        <div class="card-body">
-            <p><strong>Fecha:</strong> {{ purchased_at|date:"d/m/Y H:i" }}</p>
-            <p><strong>Total:</strong> ${{ total|floatformat:2 }}</p>
-            <h6>Cursos Comprados:</h6>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Curso</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in purchase_data %}
-                    <tr>
-                        <td>{{ item.course.name }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>${{ item.course.price|floatformat:2 }}</td>
-                        <td>${{ item.total|floatformat:2 }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="d-flex gap-2">
-                <a href="{% url 'shop:purchases' %}" class="btn btn-primary"><i class="bi bi-list-ul"></i> Ver Historial de Compras</a>
-                <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+        <h2 class="fw-bold text-white">¡Transacción Completada!</h2>
+        <p class="text-muted">Tu pago ha sido procesado de forma segura a través de nuestro aliado <strong>Mercado Pago</strong>.</p>
+    </div>
+
+    <!-- Contenedor Principal Estilo Dark Premium -->
+    <div class="card border-0 shadow-lg text-white" style="background-color: #1A1A1E; border-radius: 15px;">
+        
+        <!-- Encabezado del Recibo -->
+        <div class="card-header border-0 py-4 d-flex justify-content-between align-items-center" style="background-color: #222227; border-top-left-radius: 15px; border-top-right-radius: 15px;">
+            <div>
+                <h5 class="mb-0 fw-bold text-white-50 small text-uppercase tracking-wider">Recibo Digital Auditado</h5>
+                <span class="small text-muted">ID Transacción: CV-{{ purchased_at|date:"YmdHis" }}</span>
             </div>
+            <!-- Isotipo de Mercado Pago en texto estilizado para simular la alianza -->
+            <div class="text-end">
+                <span class="badge bg-info text-dark fw-bold px-3 py-2"><i class="bi bi-shield-lock-fill"></i> Mercado Pago</span>
+            </div>
+        </div>
+
+        <!-- Cuerpo del Recibo -->
+        <div class="card-body p-4">
+            
+            <!-- Datos Meta de la Transacción -->
+            <div class="row g-3 mb-4 pb-3 border-bottom border-secondary-subtle">
+                <div class="col-6 col-md-4">
+                    <span class="text-muted d-block small">Fecha y Hora</span>
+                    <strong class="text-white">{{ purchased_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="col-6 col-md-4">
+                    <span class="text-muted d-block small">Estado del Pago</span>
+                    <strong class="text-success"><i class="bi bi-patch-check-fill"></i> Aprobado</strong>
+                </div>
+                <div class="col-12 col-md-4">
+                    <span class="text-muted d-block small">Total Debitado</span>
+                    <h3 class="fw-bold text-info mb-0">${{ total|floatformat:2 }} COP</h3>
+                </div>
+            </div>
+
+            <!-- Tabla Desglosada de Contenidos -->
+            <h6 class="fw-bold text-white-50 mb-3 text-uppercase small">Cursos Activados en tu Cuenta:</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: #2D2D35;">
+                    <thead class="text-muted small uppercase">
+                        <tr>
+                            <th class="border-0">Nombre del Infoproducto</th>
+                            <th class="text-center border-0">Cant.</th>
+                            <th class="text-end border-0">Precio</th>
+                            <th class="text-end border-0">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchase_data %}
+                        <tr>
+                            <td class="fw-semibold text-white py-3 border-0">{{ item.course.name }}</td>
+                            <td class="text-center text-muted border-0">{{ item.quantity }}</td>
+                            <td class="text-end text-white-50 border-0">${{ item.course.price|floatformat:2 }}</td>
+                            <td class="text-end text-info fw-bold border-0">${{ item.total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pie del Recibo / Enfoque Organizacional -->
+            <div class="alert p-3 mb-4 text-center border-0 small" style="background-color: #222227; color: #A0A0A5; border-radius: 10px;">
+                <i class="bi bi-info-circle-fill text-info"></i> Los accesos a las aulas virtuales se han desbloqueado automáticamente. Se ha enviado un respaldo de esta transacción al correo electrónico registrado.
+            </div>
+
+            <!-- Acciones de Navegación -->
+            <div class="row g-2">
+                <div class="col-sm-6">
+                    <a href="{% url 'shop:purchases' %}" class="btn btn-outline-light w-100 py-2 fw-medium" style="border-radius: 8px;">
+                        <i class="bi bi-list-ul"></i> Ver Mi Historial
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="{% url 'shop:courses' %}" class="btn btn-primary w-100 py-2 fw-medium" style="border-radius: 8px; background-color: #005CBF; border-color: #005CBF;">
+                        <i class="bi bi-arrow-left"></i> Volver al Catálogo
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

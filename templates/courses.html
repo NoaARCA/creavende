@@ -1,59 +1,129 @@
 {% extends "base.html" %}
 {% load static %}
-{% block background_color %}#E7F1FF{% endblock %}
-{% block title %}Cursos{% endblock %}
+
+<!-- Cambiamos el fondo al negro azulado profundo premium -->
+{% block background_color %}#0F172A{% endblock %}
+
+{% block title %}Catálogo de Cursos - CreaVende{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Explora Nuestros Cursos</h2>
-    {% if user.is_authenticated %}
-    <a href="{% url 'shop:upload_course' %}" class="btn btn-primary mb-4"><i class="bi bi-upload"></i> Subir Nuevo Curso</a>
-    {% endif %}
-    <div class="mb-4">
-        <form method="get">
-            <label for="category" class="form-label">Filtrar por Categoría:</label>
-            <select name="category" id="category" onchange="this.form.submit()" class="form-select w-auto d-inline-block">
-                <option value="">Todas</option>
-                {% for category in categories %}
-                <option value="{{ category.id }}" {% if category.id|stringformat:"s" == request.GET.category %}selected{% endif %}>
-                    {{ category.name }}
-                </option>
-                {% endfor %}
-            </select>
+    
+    <!-- Encabezado de la Sección -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+        <div>
+            <h2 class="fw-bold text-white mb-1">🚀 Explora Nuestros Cursos</h2>
+            <p class="text-muted small mb-0">Formación interactiva de alta calidad impulsada por creadores independientes.</p>
+        </div>
+        {% if user.is_authenticated %}
+        <a href="{% url 'shop:upload_course' %}" class="btn text-white fw-medium py-2 px-3" style="background-color: #3B82F6; border-radius: 8px;">
+            <i class="bi bi-upload"></i> Subir Nuevo Curso
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Barra de Filtros Estilizada -->
+    <div class="p-3 mb-4 border-0" style="background-color: #1E293B; border-radius: 12px;">
+        <form method="get" class="row align-items-center g-2">
+            <div class="col-auto">
+                <label for="category" class="form-label text-white-50 small mb-0 fw-medium">🔍 Filtrar por Categoría:</label>
+            </div>
+            <div class="col-auto">
+                <select name="category" id="category" onchange="this.form.submit()" class="form-select text-white bg-dark border-secondary w-auto d-inline-block" style="border-radius: 6px;">
+                    <option value="" class="text-white">Todas las Categorías</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == request.GET.category %}selected{% endif %} class="text-white">
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
         </form>
     </div>
-    <div class="row">
+
+    <!-- Grilla de Cursos -->
+    <div class="row g-4">
         {% for course in courses %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                {% if course.image %}
-                <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.name }}" style="height: 200px; object-fit: cover;">
-                {% else %}
-                <img src="https://via.placeholder.com/200x200" class="card-img-top" alt="Curso sin imagen">
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ course.name }}</h5>
-                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
-                    <p class="card-text"><strong>${{ course.price|floatformat:2 }}</strong></p>
-                    {% if course.duration %}
-                    <p class="card-text"><small class="text-muted">Duración: {{ course.duration }}</small></p>
+        <div class="col-md-4">
+            <!-- Tarjeta Premium Dark -->
+            <div class="card h-100 border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px; overflow: hidden; transition: transform 0.2s;">
+                
+                <!-- Contenedor de Imagen -->
+                <div class="position-relative">
+                    {% if course.image %}
+                    <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.name }}" style="height: 210px; object-fit: cover;">
+                    {% else %}
+                    <img src="https://placeholder.com" class="card-img-top" alt="Curso sin imagen" style="height: 210px; object-fit: cover;">
                     {% endif %}
+                    
+                    <!-- Badge del Nivel encima de la imagen -->
                     {% if course.level %}
-                    <p class="card-text"><small class="text-muted">Nivel: {{ course.level }}</small></p>
+                    <span class="position-absolute top-0 start-0 m-3 badge px-3 py-2 small fw-bold" style="background-color: #3B82F6;">
+                        {{ course.level }}
+                    </span>
                     {% endif %}
-                    {% if course.category %}
-                    <p class="card-text"><small class="text-muted">Categoría: {{ course.category.name }}</small></p>
-                    {% endif %}
-                    <p class="card-text"><small class="text-muted">Creado por: {{ course.created_by.username }}</small></p>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'shop:course_detail' course.id %}" class="btn btn-primary"><i class="bi bi-eye"></i> Ver Curso</a>
-                        <a href="{% url 'shop:add_to_cart' course.id %}" class="btn btn-primary"><i class="bi bi-cart"></i> Añadir al Carrito</a>
+                </div>
+
+                <!-- Cuerpo de la Tarjeta -->
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- Categoría del curso -->
+                        {% if course.category %}
+                        <span class="text-info text-uppercase fw-bold small d-block mb-1 tracking-wider" style="font-size: 0.75rem;">
+                            {{ course.category.name }}
+                        </span>
+                        {% endif %}
+                        
+                        <h5 class="card-title fw-bold text-white mb-2" style="line-height: 1.3;">{{ course.name }}</h5>
+                        <p class="card-text text-white-50 small mb-4">{{ course.description|truncatewords:15 }}</p>
                     </div>
+
+                    <div>
+                        <!-- Bloque de Metadatos y Precio -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 pt-2 border-top border-secondary-subtle">
+                            {% if course.duration %}
+                            <span class="small text-muted"><i class="bi bi-clock"></i> {{ course.duration }}</span>
+                            {% else %}
+                            <span class="small text-muted"><i class="bi bi-journal-text"></i> Acceso Vitalicio</span>
+                            {% endif %}
+                            
+                            <!-- Precio en Verde Neón para resaltar el Valor -->
+                            <span class="fs-4 fw-bold" style="color: #10B981;">
+                                ${{ course.price|floatformat:2 }}
+                            </span>
+                        </div>
+
+                        <!-- Creador del curso -->
+                        <p class="text-muted mb-3" style="font-size: 0.8rem;">
+                            <i class="bi bi-person-circle"></i> Instructor: <span class="text-white-50">{{ course.created_by.username }}</span>
+                        </p>
+
+                        <!-- Botones de Acción Estilizados -->
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <a href="{% url 'shop:course_detail' course.id %}" class="btn btn-outline-light w-100 py-2 btn-sm fw-medium" style="border-radius: 8px;">
+                                    <i class="bi bi-eye"></i> Detalles
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="{% url 'shop:add_to_cart' course.id %}" class="btn text-white w-100 py-2 btn-sm fw-bold" style="background-color: #3B82F6; border-radius: 8px;">
+                                    <i class="bi bi-cart-plus"></i> Llevar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
         {% empty %}
-        <p>No hay cursos disponibles. ¡Sube el primero!</p>
+        <div class="col-12 text-center py-5">
+            <div class="display-4 text-muted mb-3"><i class="bi bi-folder-x"></i></div>
+            <h4 class="text-white fw-medium">No hay cursos disponibles actualmente</h4>
+            <p class="text-muted">Inicia sesión como creador y publica el primer curso de la plataforma.</p>
+        </div>
         {% endfor %}
     </div>
+
 </div>
 {% endblock %}

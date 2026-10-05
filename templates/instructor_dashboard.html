@@ -1,60 +1,133 @@
 {% extends "base.html" %}
 {% load static %}
-{% block background_color %}#FFF4E6{% endblock %}
-{% block title %}Panel de Instructores{% endblock %}
+
+<!-- Sincronizamos el fondo con la identidad visual premium de CreaVende -->
+{% block background_color %}#0F172A{% endblock %}
+
+{% block title %}Panel de Instructores - CreaVende{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Panel de Instructores</h2>
-    <div class="row">
-        <!-- Resumen -->
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Resumen</h5>
+<div class="container mt-5" style="max-width: 1100px;">
+    
+    <!-- Encabezado de la Sección -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
+        <div>
+            <h2 class="fw-bold text-white mb-1">👨‍🏫 Panel de Control del Instructor</h2>
+            <p class="text-muted small mb-0">Monitorea tus ventas netas, administra tu catálogo de infoproductos y analiza el crecimiento de tus alumnos.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'shop:courses' %}" class="btn btn-outline-light btn-sm px-3 d-flex align-items-center" style="border-radius: 8px;">
+                <i class="bi bi-arrow-left me-1"></i> Catálogo
+            </a>
+            <a href="{% url 'shop:upload_course' %}" class="btn text-white btn-sm px-3 d-flex align-items-center" style="background-color: #3B82F6; border-radius: 8px;">
+                <i class="bi bi-upload me-1"></i> Subir Curso
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- Bloque Izquierdo: Resumen y KPI Financieros del Creador -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-header border-0 py-3" style="background-color: #1E293B; border-top-left-radius: 14px; border-top-right-radius: 14px;">
+                    <h6 class="mb-0 fw-bold text-white-50 small text-uppercase"><i class="bi bi-wallet2 text-info"></i> Balance de Creador</h6>
                 </div>
-                <div class="card-body">
-                    <p><strong>Cursos:</strong> {{ course_data|length }}</p>
-                    <p><strong>Estudiantes:</strong> {{ total_students }}</p>
-                    <p><strong>Ingresos:</strong> ${{ total_income|floatformat:2 }}</p>
+                <div class="card-body p-4 pt-0">
+                    <div class="mb-4">
+                        <span class="text-muted d-block small">Tus Ganancias Netas</span>
+                        <h2 class="fw-bold my-1" style="color: #10B981;">${{ total_ganancias_instructor|floatformat:2 }} COP</h2>
+                        <span class="text-muted small" style="font-size: 0.75rem;"><i class="bi bi-info-circle text-info"></i> Descontada la comisión fija de la plataforma</span>
+                    </div>
+                    
+                    <div class="row border-top border-secondary-subtle pt-3 text-center">
+                        <div class="col-6 border-end border-secondary-subtle">
+                            <span class="text-muted d-block small">Cursos Creados</span>
+                            <h4 class="fw-bold text-white mb-0">{{ my_courses|length }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-muted d-block small">Total Alumnos</span>
+                            <h4 class="fw-bold text-info mb-0">{{ total_estudiantes }}</h4>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- Lista de cursos -->
-        <div class="col-md-8 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5>Tus Cursos</h5>
+
+        <!-- Bloque Derecho: Tabla de Cursos y Ventas Históricas -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg text-white mb-4" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-journal-bookmark-fill text-primary"></i> Tus Contenidos Publicados</h5>
                 </div>
-                <div class="card-body">
-                    {% if course_data %}
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Curso</th>
-                                <th>Estudiantes</th>
-                                <th>Ingresos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for data in course_data %}
-                            <tr>
-                                <td>{{ data.course.name }}</td>
-                                <td>{{ data.students }}</td>
-                                <td>${{ data.income|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="card-body p-4">
+                    {% if my_courses %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: #334155;">
+                            <thead class="text-muted small uppercase">
+                                <tr>
+                                    <th class="border-0">Nombre del Curso</th>
+                                    <th class="text-end border-0">Precio Base</th>
+                                    <th class="text-end border-0">Nivel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in my_courses %}
+                                <tr>
+                                    <td class="fw-semibold text-white py-2 border-0">{{ course.name }}</td>
+                                    <td class="text-end border-0" style="color: #10B981;">${{ course.price|floatformat:2 }}</td>
+                                    <td class="text-end border-0"><span class="badge bg-dark bg-opacity-50 text-info">{{ course.level|default:"General" }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
-                    <p>No has creado cursos aún.</p>
+                    <p class="text-muted small mb-0 py-3 text-center">Aún no registras infoproductos en el catálogo. ¡Sube tu primer curso para empezar!</p>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Tabla de Historial de Ventas Auditadas -->
+            <div class="card border-0 shadow-lg text-white" style="background-color: #1E293B; border-radius: 14px;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-file-earmark-bar-graph text-success"></i> Registro de Ventas Directas</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-border-color: #334155;">
+                            <thead class="text-muted small uppercase">
+                                <tr>
+                                    <th class="ps-4 py-3 border-0">Producto</th>
+                                    <th class="text-center py-3 border-0">Cant.</th>
+                                    <th class="text-end py-3 border-0">Tu Margen Neto</th>
+                                    <th class="text-end pe-4 py-3 border-0">Fecha Venta</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in my_sales %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-white py-3 border-0">{{ sale.course.name }}</td>
+                                    <td class="text-center text-muted border-0">{{ sale.quantity }}</td>
+                                    <td class="text-end fw-bold border-0" style="color: #10B981;">+${{ sale.instructor_earnings|floatformat:2 }}</td>
+                                    <td class="text-end text-muted small pe-4 border-0">{{ sale.purchased_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted border-0">
+                                        <div class="fs-2 mb-2"><i class="bi bi-graph-down"></i></div>
+                                        Aún no se registran compras para tus cursos.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'shop:courses' %}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
-        <a href="{% url 'shop:upload_course' %}" class="btn btn-primary"><i class="bi bi-upload"></i> Subir Nuevo Curso</a>
+        
     </div>
 </div>
 {% endblock %}

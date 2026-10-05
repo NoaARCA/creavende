@@ -1,43 +1,43 @@
 {% extends "base.html" %}
 {% load static %}
-{% block background_color %}#E9ECEF{% endblock %}
-{% block title %}Historial de Compras{% endblock %}
+
+{% block title %}Mis Compras - CreaVende{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Historial de Compras</h2>
-    {% if purchases %}
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h5>Tus Compras</h5>
-        </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Curso</th>
-                        <th>Cantidad</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for purchase in purchases %}
-                    <tr>
-                        <td>{{ purchase.purchased_at|date:"d/m/Y H:i" }}</td>
-                        <td>{{ purchase.course.name }}</td>
-                        <td>{{ purchase.quantity }}</td>
-                        <td>${{ purchase.total_amount|floatformat:2 }}</td>
-                        <td>{{ purchase.status }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="container mt-5" style="max-width: 1200px; width: 100%;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <h2 class="fw-bold text-white mb-0">📋 Mi Historial de Formación</h2>
+        <span class="badge bg-dark border border-secondary px-3 py-2">{{ purchases.count }} Cursos Adquiridos</span>
     </div>
-    {% else %}
-    <p>No has realizado compras aún.</p>
-    {% endif %}
-    <a href="{% url 'shop:courses' %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-left"></i> Volver a Cursos</a>
+
+    <div class="row g-4">
+        {% for purchase in purchases %}
+        <div class="col-12">
+            <div class="p-4 text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="background-color: #1E293B; border-radius: 12px; border: 1px solid #334155;">
+                <div>
+                    <span class="text-info text-uppercase fw-bold small tracking-wider" style="font-size: 0.75rem;">Curso Activo</span>
+                    <h4 class="fw-bold text-white my-1">{{ purchase.course.name }}</h4>
+                    <p class="text-muted mb-0 small"><i class="bi bi-calendar-event"></i> Adquirido el: {{ purchase.purchased_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="text-md-end d-flex flex-row flex-md-column justify-content-between justify-content-md-center gap-2">
+                    <div>
+                        <span class="text-muted small d-block">Inversión</span>
+                        <span class="fs-5 fw-bold text-success">${{ purchase.total_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'shop:course_detail' purchase.course.id %}" class="btn btn-sm btn-primary px-3 fw-bold" style="border-radius: 6px;"><i class="bi bi-play-circle-fill"></i> Entrar al Aula</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="display-3 text-muted mb-3"><i class="bi bi-cart-x"></i></div>
+            <h4 class="text-white fw-medium">Aún no has comprado ningún curso</h4>
+            <p class="text-muted">Explora nuestro catálogo comercial y dale alas a tu conocimiento.</p>
+            <a href="{% url 'shop:courses' %}" class="btn btn-primary mt-3 px-4 fw-bold" style="border-radius: 8px;">Ver Cursos</a>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

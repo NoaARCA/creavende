@@ -22,4 +22,7 @@ urlpatterns = [
     path('course/<int:course_id>/', views.course_detail, name='course_detail'),
     path('lesson/<int:lesson_id>/', views.lesson_detail, name='lesson_detail'),
     path('lesson/<int:lesson_id>/upload-resource/', views.upload_resource, name='upload_resource'),
+    
+    # === NUEVA RUTA: DASHBOARD EMPRESARIAL DE CREAVENDE ===
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
